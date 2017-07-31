@@ -1,4 +1,4 @@
-package droolswbutils
+package droolswbutil
 
 import (
 	"errors"
