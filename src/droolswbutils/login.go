@@ -1,4 +1,4 @@
-package main
+package droolswbutils
 
 import (
 	"errors"
@@ -44,11 +44,4 @@ func Login(endpoint, username, password string) (session *Session, err error) {
 	}
 
 	return nil, errors.New("No cookies")
-}
-
-func main() {
-	fmt.Println(Login(
-		"http://192.168.50.51:8080/drools-wb/j_security_check",
-		"admin",
-		"admin123"))
 }
