@@ -8,11 +8,13 @@ import (
 	"net/url"
 )
 
+// Session contains session id and key. They are cookie values.
 type Session struct {
 	ID  string
 	Key string
 }
 
+// Login to drools-wb endpoint with username and password.
 func Login(endpoint, username, password string) (session *Session, err error) {
 	u, err := url.Parse(endpoint)
 	if err != nil {
