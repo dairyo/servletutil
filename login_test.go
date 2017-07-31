@@ -44,7 +44,7 @@ func TestLoginSuccess(t *testing.T) {
 	if session.Key != "JSESSIONID" {
 		t.Errorf("session key must be JSESSIONID: %s", session.Key)
 	}
-	if session.Id != "jJ4kllb1J0vwdZvSL4Bg4pIb0YDDMZFbOz3__ku2.drools-wildfly" {
-		t.Errorf("session id is wrong: %s", session.Id)
+	if session.ID != "jJ4kllb1J0vwdZvSL4Bg4pIb0YDDMZFbOz3__ku2.drools-wildfly" {
+		t.Errorf("session id is wrong: %s", session.ID)
 	}
 }

@@ -9,25 +9,24 @@ import (
 )
 
 type Session struct {
-	Id  string
+	ID  string
 	Key string
 }
 
 func Login(endpoint, username, password string) (session *Session, err error) {
+	u, err := url.Parse(endpoint)
+	if err != nil {
+		return nil, err
+	}
 	jar, err := cookiejar.New(nil)
 	if err != nil {
 		return nil, err
 	}
-	setCookieUrl, err := url.Parse(endpoint)
-	if err != nil {
-		return nil, err
-	}
 	client := http.Client{Jar: jar}
-	values := url.Values{}
-	values.Set("j_username", username)
-	values.Set("j_password", password)
-
-	resp, err := client.PostForm(endpoint, values)
+	v := url.Values{}
+	v.Set("j_username", username)
+	v.Set("j_password", password)
+	resp, err := client.PostForm(endpoint, v)
 	if err != nil {
 		return nil, err
 	}
@@ -35,12 +34,14 @@ func Login(endpoint, username, password string) (session *Session, err error) {
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return nil, fmt.Errorf("unexpected status code %d", resp.StatusCode)
 	}
-
-	for _, cookie := range jar.Cookies(setCookieUrl) {
-		if cookie.Name == "JSESSIONID" {
-			return &Session{Id: cookie.Value, Key: cookie.Name}, nil
+	cs := jar.Cookies(u)
+	if len(cs) == 0 {
+		return nil, errors.New("no cookies for endpoint")
+	}
+	for _, c := range cs {
+		if c.Name == "JSESSIONID" {
+			return &Session{ID: c.Value, Key: c.Name}, nil
 		}
 	}
-
-	return nil, errors.New("no cookies")
+	return nil, errors.New("session not found")
 }
