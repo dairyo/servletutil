@@ -2,49 +2,63 @@ package servletutil
 
 import (
 	"net/http"
+	"net/http/httptest"
 	"testing"
-
-	"gopkg.in/jarcoal/httpmock.v1"
 )
 
 func TestLoginSuccess(t *testing.T) {
-	httpmock.Activate()
-	defer httpmock.DeactivateAndReset()
+	// Create test server.
+	ts := httptest.NewServer(
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Check request.
+			if r.Method != "POST" {
+				t.Errorf("expected method %s; got %s.", "POST", r.Method)
+				t.SkipNow()
+			}
+			if r.RequestURI != "/drools-wb/j_security_check" {
+				t.Errorf("expected request URI %s; got %s.",
+					"drools-wb/j_security_check", r.RequestURI)
+				t.SkipNow()
+			}
+			if r.PostFormValue("j_username") != "dummy_user" {
+				t.Errorf("expected username %s; got %s.",
+					"dummy_user", r.PostFormValue("j_username"))
+				t.SkipNow()
+			}
+			if r.PostFormValue("j_password") != "dummy_password" {
+				t.Errorf("expected password %s got; %s.",
+					"dummy_password", r.PostFormValue("j_password"))
+				t.SkipNow()
+			}
 
-	httpmock.RegisterResponder(
-		"POST",
-		"http://dummy.com/drools-wb/j_security_check",
-		func(req *http.Request) (*http.Response, error) {
-			if req.FormValue("j_username") != "dummy_user" {
-				t.Errorf("username must be dummy_user but %s",
-					req.FormValue("j_username"))
-			}
-			if req.FormValue("j_password") != "dummy_pass" {
-				t.Errorf("password must be dummy_pass but %s",
-					req.FormValue("j_password"))
-			}
-			res := httpmock.NewStringResponse(200, "")
-			res.Header.Add(
+			// Create response.
+			w.Header().Set(
 				"Set-Cookie",
 				"JSESSIONID=jJ4kllb1J0vwdZvSL4Bg4pIb0YDDMZFbOz3__ku2.drools-wildfly; path=/drools-wb")
-			return res, nil
-		},
-	)
+		}))
+	defer ts.Close()
 
+	// Execute login.
 	session, err := Login(
-		"http://dummy.com/drools-wb/j_security_check",
+		ts.URL+"/drools-wb/j_security_check",
 		"dummy_user",
-		"dummy_pass")
+		"dummy_password")
 	if err != nil {
 		t.Errorf("err must be nil: %s", err)
+		t.SkipNow()
 	}
 	if session == nil {
 		t.Error("session must not be nil.")
+		t.SkipNow()
 	}
 	if session.Key != "JSESSIONID" {
-		t.Errorf("session key must be JSESSIONID: %s", session.Key)
+		t.Errorf("expected key %s; got %s", "JSESSIONID", session.Key)
+		t.SkipNow()
 	}
 	if session.ID != "jJ4kllb1J0vwdZvSL4Bg4pIb0YDDMZFbOz3__ku2.drools-wildfly" {
-		t.Errorf("session id is wrong: %s", session.ID)
+		t.Errorf("expected id %s; got %s",
+			"jJ4kllb1J0vwdZvSL4Bg4pIb0YDDMZFbOz3__ku2.drools-wildfly",
+			session.ID)
+		t.SkipNow()
 	}
 }
