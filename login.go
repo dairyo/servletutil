@@ -28,7 +28,11 @@ func Login(endpoint, username, password string) (session *Session, err error) {
 	v := url.Values{}
 	v.Set("j_username", username)
 	v.Set("j_password", password)
-	resp, err := client.PostForm(endpoint, v)
+	u2, err := u.Parse("drools-wb/j_security_check")
+	if err != nil {
+		return nil, err
+	}
+	resp, err := client.PostForm(u2.String(), v)
 	if err != nil {
 		return nil, err
 	}
@@ -36,7 +40,11 @@ func Login(endpoint, username, password string) (session *Session, err error) {
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("unexpected status code %d", resp.StatusCode)
 	}
-	cs := jar.Cookies(u)
+	u3, err := u.Parse("drools-wb")
+	if err != nil {
+		return nil, err
+	}
+	cs := jar.Cookies(u3)
 	if len(cs) == 0 {
 		return nil, errors.New("no cookies for endpoint")
 	}

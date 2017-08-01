@@ -13,15 +13,15 @@ func TestLoginSuccess(t *testing.T) {
 	ts := httptest.NewServer(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// Check request.
-			if r.Method != "POST" {
-				w.WriteHeader(http.StatusMethodNotAllowed)
-				fmt.Fprintf(w, "expected method %s; got %s", "POST", r.Method)
-				return
-			}
 			if r.RequestURI != "/drools-wb/j_security_check" {
 				w.WriteHeader(http.StatusNotFound)
 				fmt.Fprintf(w, "expected path %s; got %s",
 					"/drools-wb/j_security_check", r.RequestURI)
+				return
+			}
+			if r.Method != "POST" {
+				w.WriteHeader(http.StatusMethodNotAllowed)
+				fmt.Fprintf(w, "expected method %s; got %s", "POST", r.Method)
 				return
 			}
 			u := r.PostFormValue("j_username")
@@ -38,17 +38,16 @@ func TestLoginSuccess(t *testing.T) {
 				return
 			}
 			// Create response.
-			w.Header().Set(
-				"Set-Cookie",
-				"JSESSIONID=jJ4kllb1J0vwdZvSL4Bg4pIb0YDDMZFbOz3__ku2.drools-wildfly; path=/drools-wb")
+			http.SetCookie(w, &http.Cookie{
+				Name:  "JSESSIONID",
+				Value: "jJ4kllb1J0vwdZvSL4Bg4pIb0YDDMZFbOz3__ku2.drools-wildfly",
+				Path:  "/drools-wb",
+			})
 			w.WriteHeader(http.StatusOK)
 		}))
 	defer ts.Close()
 	// Execute login.
-	session, err := Login(
-		ts.URL+"/drools-wb/j_security_check",
-		"dummy_user",
-		"dummy_password")
+	session, err := Login(ts.URL, "dummy_user", "dummy_password")
 	if err != nil {
 		t.Fatalf("err must be nil: %s", err)
 	}
