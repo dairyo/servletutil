@@ -32,13 +32,14 @@ func TestLoginSuccess(t *testing.T) {
 				"j_password": []string{"dummy_password"},
 			}
 			if !reflect.DeepEqual(r.PostForm, want) {
-				t.Errorf("expected post form %#v; got %#v", r.PostForm, want)
+				t.Errorf("expected post form %#v; got %#v", want, r.PostForm)
 				return
 			}
 			// Create response.
 			w.Header().Set(
 				"Set-Cookie",
 				"JSESSIONID=jJ4kllb1J0vwdZvSL4Bg4pIb0YDDMZFbOz3__ku2.drools-wildfly; path=/drools-wb")
+			w.WriteHeader(200)
 		}))
 	defer ts.Close()
 	// Execute login.
@@ -54,6 +55,6 @@ func TestLoginSuccess(t *testing.T) {
 		Key: "JSESSIONID",
 	}
 	if !reflect.DeepEqual(*session, want) {
-		t.Fatalf("expected session %#v; got %#v", *session, want)
+		t.Fatalf("expected session %#v; got %#v", want, *session)
 	}
 }
