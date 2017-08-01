@@ -13,22 +13,18 @@ func TestLoginSuccess(t *testing.T) {
 			// Check request.
 			if r.Method != "POST" {
 				t.Errorf("expected method %s; got %s.", "POST", r.Method)
-				t.SkipNow()
 			}
 			if r.RequestURI != "/drools-wb/j_security_check" {
 				t.Errorf("expected request URI %s; got %s.",
 					"drools-wb/j_security_check", r.RequestURI)
-				t.SkipNow()
 			}
 			if r.PostFormValue("j_username") != "dummy_user" {
 				t.Errorf("expected username %s; got %s.",
 					"dummy_user", r.PostFormValue("j_username"))
-				t.SkipNow()
 			}
 			if r.PostFormValue("j_password") != "dummy_password" {
 				t.Errorf("expected password %s got; %s.",
 					"dummy_password", r.PostFormValue("j_password"))
-				t.SkipNow()
 			}
 
 			// Create response.
@@ -44,21 +40,17 @@ func TestLoginSuccess(t *testing.T) {
 		"dummy_user",
 		"dummy_password")
 	if err != nil {
-		t.Errorf("err must be nil: %s", err)
-		t.SkipNow()
+		t.Fatalf("err must be nil: %s", err)
 	}
 	if session == nil {
-		t.Error("session must not be nil.")
-		t.SkipNow()
+		t.Fatal("session must not be nil.")
 	}
 	if session.Key != "JSESSIONID" {
-		t.Errorf("expected key %s; got %s", "JSESSIONID", session.Key)
-		t.SkipNow()
+		t.Fatalf("expected key %s; got %s", "JSESSIONID", session.Key)
 	}
 	if session.ID != "jJ4kllb1J0vwdZvSL4Bg4pIb0YDDMZFbOz3__ku2.drools-wildfly" {
-		t.Errorf("expected id %s; got %s",
+		t.Fatalf("expected id %s; got %s",
 			"jJ4kllb1J0vwdZvSL4Bg4pIb0YDDMZFbOz3__ku2.drools-wildfly",
 			session.ID)
-		t.SkipNow()
 	}
 }
