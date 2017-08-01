@@ -1,4 +1,4 @@
-package droolswbutil
+package servletutil
 
 import (
 	"net/http"
