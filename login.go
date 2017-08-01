@@ -33,7 +33,7 @@ func Login(endpoint, username, password string) (session *Session, err error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("unexpected status code %d", resp.StatusCode)
 	}
 	cs := jar.Cookies(u)

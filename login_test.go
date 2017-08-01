@@ -1,9 +1,9 @@
 package servletutil
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
 	"reflect"
 	"testing"
 )
@@ -14,32 +14,34 @@ func TestLoginSuccess(t *testing.T) {
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// Check request.
 			if r.Method != "POST" {
-				t.Errorf("expected method %s; got %s.", "POST", r.Method)
+				w.WriteHeader(http.StatusMethodNotAllowed)
+				fmt.Fprintf(w, "expected method %s; got %s", "POST", r.Method)
 				return
 			}
 			if r.RequestURI != "/drools-wb/j_security_check" {
-				t.Errorf("expected request URI %s; got %s.",
-					"drools-wb/j_security_check", r.RequestURI)
+				w.WriteHeader(http.StatusNotFound)
+				fmt.Fprintf(w, "expected path %s; got %s",
+					"/drools-wb/j_security_check", r.RequestURI)
 				return
 			}
-			err := r.ParseForm()
-			if err != nil {
-				t.Errorf("err must be nil: %s", err)
+			u := r.PostFormValue("j_username")
+			if u != "dummy_user" {
+				w.WriteHeader(http.StatusBadRequest)
+				fmt.Fprintf(w, "expected user %s; got %s", "dummy_user", u)
 				return
 			}
-			want := url.Values{
-				"j_username": []string{"dummy_user"},
-				"j_password": []string{"dummy_password"},
-			}
-			if !reflect.DeepEqual(r.PostForm, want) {
-				t.Errorf("expected post form %#v; got %#v", want, r.PostForm)
+			p := r.PostFormValue("j_password")
+			if p != "dummy_password" {
+				w.WriteHeader(http.StatusBadRequest)
+				fmt.Fprintf(w, "expected password %s; got %s",
+					"dummy_password", p)
 				return
 			}
 			// Create response.
 			w.Header().Set(
 				"Set-Cookie",
 				"JSESSIONID=jJ4kllb1J0vwdZvSL4Bg4pIb0YDDMZFbOz3__ku2.drools-wildfly; path=/drools-wb")
-			w.WriteHeader(200)
+			w.WriteHeader(http.StatusOK)
 		}))
 	defer ts.Close()
 	// Execute login.
