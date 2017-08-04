@@ -46,7 +46,6 @@ func Login(endpoint, username, password string) (session *Session, err error) {
 	}
 	resp, err = client.PostForm(u3.String(), url.Values{
 		"j_username": []string{username}, "j_password": []string{password}})
-
 	if err != nil {
 		return nil, err
 	}
@@ -68,4 +67,40 @@ func Login(endpoint, username, password string) (session *Session, err error) {
 		}
 	}
 	return nil, errors.New("session not found")
+}
+
+func Logout(endpoint string, session *Session) (err error) {
+	u, err := url.Parse(endpoint)
+	if err != nil {
+		return err
+	}
+	u2, err := u.Parse("drools-wb")
+	if err != nil {
+		return err
+	}
+	// Create http client.
+	jar, err := cookiejar.New(nil)
+	if err != nil {
+		return err
+	}
+	jar.SetCookies(u2, []*http.Cookie{&http.Cookie{
+		Name:  session.Key,
+		Value: session.ID,
+		Path:  "drools-wb",
+	}})
+	client := http.Client{Jar: jar}
+	// Logout.
+	u3, err := u.Parse("drools-wb/logout.jsp")
+	if err != nil {
+		return err
+	}
+	resp, err := client.Get(u3.String())
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("unexpected status code %d", resp.StatusCode)
+	}
+	return nil
 }
