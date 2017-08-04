@@ -13,37 +13,62 @@ func TestLoginSuccess(t *testing.T) {
 	ts := httptest.NewServer(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// Check request.
-			if r.RequestURI != "/drools-wb/j_security_check" {
+			if r.RequestURI == "/drools-wb" {
+				if r.Method != http.MethodGet {
+					w.WriteHeader(http.StatusMethodNotAllowed)
+					fmt.Fprintf(w, "expected method %s; got %s", http.MethodGet, r.Method)
+					return
+				}
+				http.SetCookie(w, &http.Cookie{
+					Name:  "JSESSIONID",
+					Value: "5q2CmRQRZLB81T9Gsbkt44iplQCNHvV5lmZkI0u9.drools-wildfly",
+					Path:  "/drools-wb",
+				})
+				w.WriteHeader(http.StatusOK)
+				return
+			} else if r.RequestURI == "/drools-wb/j_security_check" {
+				if r.Method != "POST" {
+					w.WriteHeader(http.StatusMethodNotAllowed)
+					fmt.Fprintf(w, "expected method %s; got %s", "POST", r.Method)
+					return
+				}
+				c, err := r.Cookie("JSESSIONID")
+				if err != nil {
+					w.WriteHeader(http.StatusBadRequest)
+					fmt.Fprintf(w, "no cookie for JSESSIONID: %s", err)
+					return
+				}
+				if c.Value != "5q2CmRQRZLB81T9Gsbkt44iplQCNHvV5lmZkI0u9.drools-wildfly" {
+					w.WriteHeader(http.StatusBadRequest)
+					fmt.Fprintf(w, "expected cookie %s; got %s", "5q2CmRQRZLB81T9Gsbkt44iplQCNHvV5lmZkI0u9.drools-wildfly", c.Value)
+					return
+				}
+				u := r.PostFormValue("j_username")
+				if u != "dummy_user" {
+					w.WriteHeader(http.StatusBadRequest)
+					fmt.Fprintf(w, "expected user %s; got %s", "dummy_user", u)
+					return
+				}
+				p := r.PostFormValue("j_password")
+				if p != "dummy_password" {
+					w.WriteHeader(http.StatusBadRequest)
+					fmt.Fprintf(w, "expected password %s; got %s",
+						"dummy_password", p)
+					return
+				}
+				// Create response.
+				http.SetCookie(w, &http.Cookie{
+					Name:  "JSESSIONID",
+					Value: "IKmkpzGWSKMO_Z3cjZIz8jH615ZMC95msfr-muRG.drools-wildfly",
+					Path:  "/drools-wb",
+				})
+				w.WriteHeader(http.StatusOK)
+				return
+			} else {
 				w.WriteHeader(http.StatusNotFound)
-				fmt.Fprintf(w, "expected path %s; got %s",
-					"/drools-wb/j_security_check", r.RequestURI)
+				fmt.Fprint(w, "invalid path")
 				return
 			}
-			if r.Method != "POST" {
-				w.WriteHeader(http.StatusMethodNotAllowed)
-				fmt.Fprintf(w, "expected method %s; got %s", "POST", r.Method)
-				return
-			}
-			u := r.PostFormValue("j_username")
-			if u != "dummy_user" {
-				w.WriteHeader(http.StatusBadRequest)
-				fmt.Fprintf(w, "expected user %s; got %s", "dummy_user", u)
-				return
-			}
-			p := r.PostFormValue("j_password")
-			if p != "dummy_password" {
-				w.WriteHeader(http.StatusBadRequest)
-				fmt.Fprintf(w, "expected password %s; got %s",
-					"dummy_password", p)
-				return
-			}
-			// Create response.
-			http.SetCookie(w, &http.Cookie{
-				Name:  "JSESSIONID",
-				Value: "jJ4kllb1J0vwdZvSL4Bg4pIb0YDDMZFbOz3__ku2.drools-wildfly",
-				Path:  "/drools-wb",
-			})
-			w.WriteHeader(http.StatusOK)
 		}))
 	defer ts.Close()
 	// Execute login.
@@ -52,7 +77,7 @@ func TestLoginSuccess(t *testing.T) {
 		t.Fatalf("err must be nil: %s", err)
 	}
 	want := Session{
-		ID:  "jJ4kllb1J0vwdZvSL4Bg4pIb0YDDMZFbOz3__ku2.drools-wildfly",
+		ID:  "IKmkpzGWSKMO_Z3cjZIz8jH615ZMC95msfr-muRG.drools-wildfly",
 		Key: "JSESSIONID",
 	}
 	if !reflect.DeepEqual(*session, want) {
