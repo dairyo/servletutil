@@ -20,19 +20,18 @@ func Login(endpoint, username, password string) (session *Session, err error) {
 	if err != nil {
 		return nil, err
 	}
+	// Create http client.
 	jar, err := cookiejar.New(nil)
 	if err != nil {
 		return nil, err
 	}
 	client := http.Client{Jar: jar}
-	v := url.Values{}
-	v.Set("j_username", username)
-	v.Set("j_password", password)
-	u2, err := u.Parse("drools-wb/j_security_check")
+	// Get cookie for login.
+	u2, err := u.Parse("drools-wb")
 	if err != nil {
 		return nil, err
 	}
-	resp, err := client.PostForm(u2.String(), v)
+	resp, err := client.Get(u2.String())
 	if err != nil {
 		return nil, err
 	}
@@ -40,11 +39,26 @@ func Login(endpoint, username, password string) (session *Session, err error) {
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("unexpected status code %d", resp.StatusCode)
 	}
-	u3, err := u.Parse("drools-wb")
+	// Login to get session ID.
+	u3, err := u.Parse("drools-wb/j_security_check")
 	if err != nil {
 		return nil, err
 	}
-	cs := jar.Cookies(u3)
+	resp, err = client.PostForm(u3.String(), url.Values{
+		"j_username": []string{username}, "j_password": []string{password}})
+
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unexpected status code %d", resp.StatusCode)
+	}
+	u4, err := u.Parse("drools-wb")
+	if err != nil {
+		return nil, err
+	}
+	cs := jar.Cookies(u4)
 	if len(cs) == 0 {
 		return nil, errors.New("no cookies for endpoint")
 	}
