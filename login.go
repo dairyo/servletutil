@@ -15,7 +15,7 @@ type Session struct {
 	Key string
 }
 
-// Drools-wb user infomation.
+// User information.
 type User struct {
 	Username string
 	Password string
@@ -113,7 +113,7 @@ func Logout(endpoint string, session *Session) (err error) {
 	return nil
 }
 
-// Create drools-wb user.
+// CreateUser creates drools-wb user.
 func CreateUser(endpoint string, newUser, restUser User) (err error) {
 	// Create client.
 	client := http.Client{}
